@@ -24,6 +24,9 @@ async function getRegionMap(cacheId: string) {
     regionMapUpdated < Date.now() - 3600 * 1000
   ) {
     // Fetch regions from Medusa. We can't use the JS client here because middleware is running on Edge and the client needs a Node environment.
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 5000)
+
     const { regions } = await fetch(`${BACKEND_URL}/store/regions`, {
       headers: {
         "x-publishable-api-key": PUBLISHABLE_API_KEY!,
@@ -33,7 +36,9 @@ async function getRegionMap(cacheId: string) {
         tags: [`regions-${cacheId}`],
       },
       cache: "force-cache",
+      signal: controller.signal,
     }).then(async (response) => {
+      clearTimeout(timeoutId)
       const json = await response.json()
 
       if (!response.ok) {
@@ -41,6 +46,9 @@ async function getRegionMap(cacheId: string) {
       }
 
       return json
+    }).catch((err) => {
+      clearTimeout(timeoutId)
+      throw err
     })
 
     if (!regions?.length) {
@@ -112,7 +120,24 @@ export async function middleware(request: NextRequest) {
 
   let cacheId = cacheIdCookie?.value || crypto.randomUUID()
 
-  const regionMap = await getRegionMap(cacheId)
+  let regionMap: Map<string, HttpTypes.StoreRegion>
+  try {
+    regionMap = await getRegionMap(cacheId)
+  } catch {
+    // Backend unavailable (e.g. cold start on free tier) — fall back to default region
+    const fallbackCountryCode = DEFAULT_REGION
+    const redirectPath =
+      request.nextUrl.pathname === "/" ? "" : request.nextUrl.pathname
+    const queryString = request.nextUrl.search ? request.nextUrl.search : ""
+    const urlCountryCode = request.nextUrl.pathname.split("/")[1]?.toLowerCase()
+    if (urlCountryCode === fallbackCountryCode) {
+      return NextResponse.next()
+    }
+    return NextResponse.redirect(
+      `${request.nextUrl.origin}/${fallbackCountryCode}${redirectPath}${queryString}`,
+      307
+    )
+  }
 
   const countryCode = regionMap && (await getCountryCode(request, regionMap))
 
