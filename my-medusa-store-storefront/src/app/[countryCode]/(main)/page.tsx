@@ -8,7 +8,7 @@ import { getRegion } from "@lib/data/regions"
 import { getBanners } from "@lib/data/banners"
 
 export const metadata: Metadata = {
-  title: "Medusa Next.js Starter Template",
+  title: "Super Shop",
   description:
     "A performant frontend ecommerce starter template with Next.js 15 and Medusa.",
 }
