@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rsync -av --exclude='node_modules' --exclude='.env' --exclude='medusa.db' --exclude='*.db' --exclude='.medusa' --exclude='build' --exclude='.cache' --exclude='dist' /Users/leninm/Documents/Work/medusa/my-medusa-store/ /Users/leninm/Documents/Work/medusa-demo/backend/)",
+      "Bash(rsync -av --exclude='node_modules' --exclude='.env.local' --exclude='.next' --exclude='tsconfig.tsbuildinfo' /Users/leninm/Documents/Work/medusa/my-medusa-store-storefront/ /Users/leninm/Documents/Work/medusa-demo/storefront/)"
+    ]
+  }
+}
